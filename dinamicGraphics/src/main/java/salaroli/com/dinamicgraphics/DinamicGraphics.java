@@ -40,7 +40,7 @@ public class DinamicGraphics extends View {
       paintEixos.setAntiAlias(true);
 
       paintGrade = new Paint();
-      paintGrade.setStrokeWidth(5);
+      paintGrade.setStrokeWidth(3);
       paintGrade.setStyle(Paint.Style.STROKE);
       paintGrade.setColor(Color.GRAY);
       paintGrade.setPathEffect(new DashPathEffect(new float[]{15, 30}, 0));
