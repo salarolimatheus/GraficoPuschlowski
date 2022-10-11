@@ -3,15 +3,22 @@ package salaroli.com.graficopuschlowski;
 import androidx.appcompat.app.AppCompatActivity;
 import salaroli.com.dinamicgraphics.DinamicGraphics;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         DinamicGraphics dinamicGraphics = findViewById(R.id.dinamic_graphics);
+        TextView betaText = findViewById(R.id.beta);
+        TextView alphaText = findViewById(R.id.alpha);
 
         String[] Ytickers = new String[] { "90", "120", "150", "180", "210", "240", "270", "300", "330", "360"};
         String[] Xtickers = new String[] {"0", "20", "40", "60", "80", "100", "120", "140", "160", "180"};
@@ -46,6 +53,19 @@ public class MainActivity extends AppCompatActivity {
                 dinamicGraphics.plotBackgroundCurves(valores_x, valores2);
                 dinamicGraphics.plotBackgroundCurves(valores_x, valores3);
             }
+        });
+
+        dinamicGraphics.setOnTouchListener((view, motionEvent) -> {
+            dinamicGraphics.changeCursor(motionEvent);
+            alphaText.setText(String.valueOf(dinamicGraphics.getCursorX()));
+            betaText.setText(String.valueOf(dinamicGraphics.getCursorY()));
+            return true;
+        });
+
+        final boolean[] cursorMode = {false};
+        alphaText.setOnClickListener(view -> {
+            cursorMode[0] = !cursorMode[0];
+            dinamicGraphics.setHorizontalCursor(cursorMode[0]);
         });
     }
 }

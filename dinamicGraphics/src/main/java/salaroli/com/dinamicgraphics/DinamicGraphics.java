@@ -9,22 +9,27 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import static java.lang.Math.abs;
+
 public class DinamicGraphics extends View {
-   private Paint paintEixos, paintGrade, paintTitles, paintNameTickers, paintCurve, paintBackgroundCurves;
+   private Paint paintEixos, paintGrade, paintTitles, paintNameTickers, paintCursor, paintCurve, paintBackgroundCurves;
    private Path pathEixos, pathGradeX, pathGradeY, pathTickerX, pathTickerY, pathCursor, pathMainCurve, pathBackgroundCurves;
    private Rect rect;
    private int larguraTotal, alturaTotal;
    private float widthLeft, widthRight, heightTop, heightBottom, paddingTicker;
-   private boolean gradeStatus, boundaries;
+   private boolean gradeStatus, boundaries, horizontalCursor;
    private String xTitle, yTitle;
    private String[] xNameTickers, yNameTickers;
    private float sizeTitles, sizeNameTickers;
    private float ymax = 360, ymin = 90, xmin = 0, xmax = 180;
    private float A, B, C, D;
+   private float cursorX, cursorY;
+   private double[] alpha, beta;
 
    public DinamicGraphics(Context context) {
       super(context);
@@ -37,6 +42,8 @@ public class DinamicGraphics extends View {
    private void init() {
       gradeStatus = true;
       boundaries = false;
+      horizontalCursor = true;
+      cursorX = 0; cursorY = 0;
       xNameTickers = new String[]{};
       yNameTickers = new String[]{};
       xTitle = "";
@@ -54,6 +61,12 @@ public class DinamicGraphics extends View {
       paintGrade.setColor(Color.LTGRAY);
       paintGrade.setPathEffect(new DashPathEffect(new float[]{15, 30}, 0));
       paintGrade.setAntiAlias(true);
+
+      paintCursor = new Paint();
+      paintCursor.setStrokeWidth(5);
+      paintCursor.setStyle(Paint.Style.FILL_AND_STROKE);
+      paintCursor.setColor(Color.RED);
+      paintCursor.setAntiAlias(true);
 
       paintCurve = new Paint();
       paintCurve.setStrokeWidth(5);
@@ -80,8 +93,6 @@ public class DinamicGraphics extends View {
       pathTickerY = new Path();
       pathMainCurve = new Path();
       pathBackgroundCurves = new Path();
-
-      // AINDA NÃO UTILIZADAS
       pathCursor = new Path();
    }
 
@@ -105,31 +116,7 @@ public class DinamicGraphics extends View {
 
       canvas.drawPath(pathMainCurve, paintCurve);
       canvas.drawPath(pathBackgroundCurves, paintBackgroundCurves);
-   }
-
-   private void drawNameTickers(Canvas canvas) {
-      paintNameTickers.setTextAlign(Paint.Align.CENTER);
-      if (xNameTickers.length > 0) {
-         for (int i = 0; i < xNameTickers.length; i++) {
-            float passo = (widthRight - widthLeft)/(xNameTickers.length-1);
-            canvas.drawText(xNameTickers[i], widthLeft + i * passo, 0.97f * alturaTotal, paintNameTickers);
-         }
-      }
-
-      paintNameTickers.setTextAlign(Paint.Align.RIGHT);
-      if(yNameTickers.length > 0) {
-         for (int i = 0; i < yNameTickers.length; i++) {
-            float passo = (heightBottom - heightTop)/(yNameTickers.length-1);
-            final float heightConstant = heightBottom + (sizeNameTickers * 0.4f);
-            canvas.drawText(yNameTickers[i], (widthLeft*0.8f), heightConstant - i * passo, paintNameTickers);
-         }
-      }
-   }
-   private void drawAxisTitles(Canvas canvas) {
-         paintTitles.setTextAlign(Paint.Align.LEFT);
-         canvas.drawText(yTitle, 0, (heightTop*0.5f), paintTitles);
-         paintTitles.setTextAlign(Paint.Align.RIGHT);
-         canvas.drawText(xTitle, (larguraTotal), (alturaTotal*0.99f), paintTitles);
+      canvas.drawPath(pathCursor, paintCursor);
    }
 
    protected void onSizeChanged(int width, int height, int oldw, int oldh) {
@@ -161,7 +148,6 @@ public class DinamicGraphics extends View {
       rect = new Rect(0, 0, width, height);
       super.onSizeChanged(width, height, oldw, oldh);
    }
-
    private void calculateBoundaries() {
       A = (widthRight - widthLeft)/(xmax - xmin);
       B = widthRight - A * xmax;
@@ -182,6 +168,45 @@ public class DinamicGraphics extends View {
       pathMainCurve.transform(matrix);
       matrix.setTranslate(B, D);
       pathMainCurve.transform(matrix);
+   }
+   private float normalizeToScalar(float value, float coefAngular, float coefLinear) {
+      if (coefAngular == 0)
+         return 0;
+      return (value - coefLinear)/coefAngular;
+   }
+   private float normalizeToPlot(float value, float coefAngular, float coefLinear) {
+      return (coefAngular * value + coefLinear);
+   }
+
+   public void changeCursor(MotionEvent event) {
+      if (horizontalCursor) {
+         cursorX = event.getX();
+         if (cursorX < widthLeft) cursorX = widthLeft;
+         else if (cursorX > widthRight) cursorX = widthRight;
+         pathCursor.reset();
+         pathCursor.moveTo(cursorX, heightTop);
+         pathCursor.lineTo(cursorX, heightBottom);
+
+         float cursorAlpha = normalizeToScalar(cursorX, A, B);
+         float cursorBeta = (float) beta[findIndexOfNearestValue(alpha, cursorAlpha)];
+         cursorY = normalizeToPlot(cursorBeta, C, D);
+         pathCursor.addCircle(cursorX, cursorY,paintEixos.getStrokeWidth() * 1.5f, Path.Direction.CW);
+         invalidate();
+      } else {
+         //TODO: COLOCAR O SEGUNDO MODO
+      }
+   }
+
+   private int findIndexOfNearestValue(double[] array, float value) {
+      int index = 0;
+      float difference = (float) abs(value - array[0]);
+      for (int i = 0; i < array.length; i++) {
+         if (abs(value - array[i]) < difference) {
+            difference = (float) abs(value - array[i]);
+            index = i;
+         }
+      }
+      return index;
    }
 
    private void drawAxis() {
@@ -219,6 +244,69 @@ public class DinamicGraphics extends View {
          pathTickerY.lineTo(widthLeft - paddingTicker, heightTop + i * passo);
       }
    }
+   private void drawNameTickers(Canvas canvas) {
+      paintNameTickers.setTextAlign(Paint.Align.CENTER);
+      if (xNameTickers.length > 0) {
+         for (int i = 0; i < xNameTickers.length; i++) {
+            float passo = (widthRight - widthLeft)/(xNameTickers.length-1);
+            canvas.drawText(xNameTickers[i], widthLeft + i * passo, 0.97f * alturaTotal, paintNameTickers);
+         }
+      }
+
+      paintNameTickers.setTextAlign(Paint.Align.RIGHT);
+      if(yNameTickers.length > 0) {
+         for (int i = 0; i < yNameTickers.length; i++) {
+            float passo = (heightBottom - heightTop)/(yNameTickers.length-1);
+            final float heightConstant = heightBottom + (sizeNameTickers * 0.4f);
+            canvas.drawText(yNameTickers[i], (widthLeft*0.8f), heightConstant - i * passo, paintNameTickers);
+         }
+      }
+   }
+   private void drawAxisTitles(Canvas canvas) {
+      paintTitles.setTextAlign(Paint.Align.LEFT);
+      canvas.drawText(yTitle, 0, (heightTop*0.5f), paintTitles);
+      paintTitles.setTextAlign(Paint.Align.RIGHT);
+      canvas.drawText(xTitle, (larguraTotal), (alturaTotal*0.99f), paintTitles);
+   }
+   public boolean plotMainCurve(double[] alpha, double[] beta) {
+      if (alpha.length != beta.length) {
+         return false;
+      }
+      if (alpha.length <= 0) {
+         return false;
+      }
+
+      this.alpha = alpha;
+      this.beta = beta;
+
+      pathMainCurve.reset();
+      pathMainCurve.moveTo((float) alpha[0], (float) beta[0]);
+      for (int i = 1; i < alpha.length; i++) {
+         pathMainCurve.lineTo((float) alpha[i], (float) beta[i]);
+      }
+      checkNormalize(pathMainCurve);
+      return true;
+   }
+   public boolean plotBackgroundCurves(double[] alpha, double[] beta) {
+      if (alpha.length != beta.length) {
+         return false;
+      }
+      if (alpha.length <= 0) {
+         return false;
+      }
+
+      Path pathCurve = new Path();
+      pathCurve.moveTo((float) alpha[0], (float) beta[0]);
+      for (int i = 1; i < alpha.length; i++) {
+         pathCurve.lineTo((float) alpha[i], (float) beta[i]);
+      }
+      checkNormalize(pathCurve);
+      pathBackgroundCurves.addPath(pathCurve);
+      return true;
+   }
+   public void clearBackgroundCurves() {
+      pathBackgroundCurves.reset();
+   }
 
    public void setGradeStatus(boolean status) {
       this.gradeStatus = status;
@@ -253,42 +341,14 @@ public class DinamicGraphics extends View {
    public void setBackgroundCurvesWidth(int width) {
       paintCurve.setStrokeWidth(width);
    }
-
-   public boolean plotMainCurve(double[] alpha, double[] beta) {
-      if (alpha.length != beta.length) {
-         return false;
-      }
-      if (alpha.length <= 0) {
-         return false;
-      }
-
-      pathMainCurve.reset();
-      pathMainCurve.moveTo((float) alpha[0], (float) beta[0]);
-      for (int i = 1; i < alpha.length; i++) {
-         pathMainCurve.lineTo((float) alpha[i], (float) beta[i]);
-      }
-      checkNormalize(pathMainCurve);
-      return true;
+   public void setHorizontalCursor(boolean cursorMode) {
+      this.horizontalCursor = cursorMode;
    }
 
-   public boolean plotBackgroundCurves(double[] alpha, double[] beta) {
-      if (alpha.length != beta.length) {
-         return false;
-      }
-      if (alpha.length <= 0) {
-         return false;
-      }
-
-      Path pathCurve = new Path();
-      pathCurve.moveTo((float) alpha[0], (float) beta[0]);
-      for (int i = 1; i < alpha.length; i++) {
-         pathCurve.lineTo((float) alpha[i], (float) beta[i]);
-      }
-      checkNormalize(pathCurve);
-      pathBackgroundCurves.addPath(pathCurve);
-      return true;
+   public float getCursorX() {
+      return normalizeToScalar(cursorX, A, B);
    }
-   public void clearBackgroundCurves() {
-      pathBackgroundCurves.reset();
+   public float getCursorY() {
+      return normalizeToScalar(cursorY, C, D);
    }
 }
