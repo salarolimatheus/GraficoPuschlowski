@@ -14,7 +14,7 @@ import androidx.annotation.Nullable;
 
 public class DinamicGraphics extends View {
    private Paint paintEixos, paintGrade, paintTitles, paintNameTickers;
-   private Path pathEixos, pathGradeX, pathGradeY, pathTickerX, pathTickerY, pathCursor, pathCurvaSelecionada, pathCurvasSecundarias;
+   private Path pathEixos, pathGradeX, pathGradeY, pathTickerX, pathTickerY, pathCursor, pathMainCurve, pathSecondaryCurves;
    private Rect rect;
    private int larguraTotal, alturaTotal;
    private float widthLeft, widthRight, heightTop, heightBottom, paddingTicker;
@@ -22,6 +22,8 @@ public class DinamicGraphics extends View {
    private String xTitle, yTitle;
    private String[] xNameTickers, yNameTickers;
    private float sizeTitles, sizeNameTickers;
+   private double[] alpha, beta;
+   private float ymax = 360, ymin = 90, xmin = 0, xmax = 180;
 
    public DinamicGraphics(Context context) {
       super(context);
@@ -33,6 +35,11 @@ public class DinamicGraphics extends View {
    }
    private void init() {
       gradeStatus = true;
+      xNameTickers = new String[]{};
+      yNameTickers = new String[]{};
+      xTitle = "";
+      yTitle = "";
+
       paintEixos = new Paint();
       paintEixos.setStrokeWidth(5);
       paintEixos.setStyle(Paint.Style.STROKE);
@@ -44,7 +51,6 @@ public class DinamicGraphics extends View {
       paintGrade.setStyle(Paint.Style.STROKE);
       paintGrade.setColor(Color.GRAY);
       paintGrade.setPathEffect(new DashPathEffect(new float[]{15, 30}, 0));
-//      paintGrade.setPathEffect(new DashPathEffect(new float[]{5, 10, 15, 20}, 0));
       paintGrade.setAntiAlias(true);
 
       paintTitles = new Paint();
@@ -58,11 +64,11 @@ public class DinamicGraphics extends View {
       pathGradeY = new Path();
       pathTickerX = new Path();
       pathTickerY = new Path();
+      pathMainCurve = new Path();
+      pathSecondaryCurves = new Path();
 
       // AINDA NÃO UTILIZADAS
       pathCursor = new Path();
-      pathCurvaSelecionada = new Path();
-      pathCurvasSecundarias = new Path();
    }
 
    @Override
@@ -84,6 +90,8 @@ public class DinamicGraphics extends View {
       drawNameTickers(canvas);
 
       //DESENHO DAS CURVAS
+      paintEixos.setColor(Color.BLUE);
+      canvas.drawPath(pathMainCurve, paintEixos);
    }
 
    private void drawNameTickers(Canvas canvas) {
@@ -105,10 +113,10 @@ public class DinamicGraphics extends View {
       }
    }
    private void drawAxisTitles(Canvas canvas) {
-      paintTitles.setTextAlign(Paint.Align.LEFT);
-      canvas.drawText(yTitle, 0, (heightTop*0.5f), paintTitles);
-      paintTitles.setTextAlign(Paint.Align.RIGHT);
-      canvas.drawText(xTitle, (larguraTotal), (alturaTotal*0.99f), paintTitles);
+         paintTitles.setTextAlign(Paint.Align.LEFT);
+         canvas.drawText(yTitle, 0, (heightTop*0.5f), paintTitles);
+         paintTitles.setTextAlign(Paint.Align.RIGHT);
+         canvas.drawText(xTitle, (larguraTotal), (alturaTotal*0.99f), paintTitles);
    }
 
    protected void onSizeChanged(int width, int height, int oldw, int oldh) {
@@ -124,27 +132,28 @@ public class DinamicGraphics extends View {
       pathEixos.reset();
       pathGradeX.reset();
 
-      desenhaEixos();
-      desenhaGradeX(xNameTickers.length);
-      desenhaGradeY(yNameTickers.length);
+      drawAxis();
+      drawGridX(xNameTickers.length);
+      drawGridY(yNameTickers.length);
 
       sizeTitles = widthLeft*0.45f;
       sizeNameTickers = widthLeft*0.4f;
       paintTitles.setTextSize(sizeTitles);
       paintNameTickers.setTextSize(sizeNameTickers);
+      drawMainCurve();
 
       rect = new Rect(0, 0, width, height);
       super.onSizeChanged(width, height, oldw, oldh);
    }
 
-   private void desenhaEixos() {
+   private void drawAxis() {
       pathEixos.moveTo(widthLeft, heightTop);
       pathEixos.lineTo(widthLeft, heightBottom);
       pathEixos.lineTo(widthRight, heightBottom);
       pathEixos.lineTo(widthRight, heightTop);
       pathEixos.lineTo(widthLeft, heightTop);
    }
-   private void desenhaGradeX(int length) {
+   private void drawGridX(int length) {
       if (length <= 0)
          return;
       length -= 1;
@@ -158,7 +167,7 @@ public class DinamicGraphics extends View {
          pathTickerX.lineTo(widthLeft + i * passo, heightBottom - paddingTicker);
       }
    }
-   private void desenhaGradeY(int length) {
+   private void drawGridY(int length) {
       if (length <= 2)
          return;
       length -= 1;
@@ -177,15 +186,52 @@ public class DinamicGraphics extends View {
       this.gradeStatus = status;
    }
    public void setXNameTickers(String[] nameTickers) {
-      desenhaGradeX(nameTickers.length);
+      drawGridX(nameTickers.length);
       xNameTickers = nameTickers;
    }
    public void setYNameTickers(String[] nameTickers) {
-      desenhaGradeY(nameTickers.length);
+      drawGridY(nameTickers.length);
       yNameTickers = nameTickers;
    }
    public void setAxisTitles(String xTitle, String yTitle) {
       this.xTitle = xTitle;
       this.yTitle = yTitle;
+   }
+
+   public boolean plotMainCurve(double[] alpha, double[] beta) {
+      if (alpha.length != beta.length) {
+         return false;
+      }
+      if (alpha.length <= 0) {
+         return false;
+      }
+
+      this.alpha = alpha;
+      this.beta = beta;
+
+      drawMainCurve();
+      return true;
+   }
+   private void drawMainCurve() {
+      pathMainCurve.reset();
+      pathMainCurve.moveTo(normalize(alpha[0], widthRight, widthLeft, xmax, xmin),
+              normalize(beta[0], heightTop, heightBottom, ymax, ymin));
+      for (int i = 1; i < alpha.length; i++) {
+         pathMainCurve.lineTo(normalize(alpha[i], widthRight, widthLeft, xmax, xmin),
+                 normalize(beta[i], heightTop, heightBottom, ymax, ymin));
+      }
+   }
+
+   private float normalize(double data, float pixelsMax, float pixelsMin, float max, float min) {
+      float A = (pixelsMax - pixelsMin)/(max - min);
+      float B = pixelsMax - A * max;
+      return (float)(A*data + B);
+   }
+
+   public void plotBackgroundCurves() {  //TODO: COMO FAZER AS CURVAS DE FUNDO?
+
+   }
+   public void clearSecondaryCurves() {
+      pathSecondaryCurves.reset();
    }
 }
