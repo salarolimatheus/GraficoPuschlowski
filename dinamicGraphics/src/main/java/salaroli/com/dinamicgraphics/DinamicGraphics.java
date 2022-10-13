@@ -26,9 +26,9 @@ public class DinamicGraphics extends View {
    private String xTitle, yTitle;
    private String[] xNameTickers, yNameTickers;
    private float sizeTitles, sizeNameTickers;
-   private float ymax = 360, ymin = 90, xmin = 0, xmax = 180;
+   private float ymax = 360, ymin = 90, xmin = 0, xmax = 180, cxmin = 0, cxmax = 180;
    private float A, B, C, D;
-   private float cursorX, cursorY;
+   private float cursorX, cursorY, cursorXmin, cursorXmax;
    private double[] alpha, beta;
 
    public DinamicGraphics(Context context) {
@@ -141,7 +141,8 @@ public class DinamicGraphics extends View {
       sizeNameTickers = widthLeft*0.4f;
       paintTitles.setTextSize(sizeTitles);
       paintNameTickers.setTextSize(sizeNameTickers);
-
+      cursorXmax = normalizeToPlot(cxmax, A, B);
+      cursorXmin =normalizeToPlot(cxmin, A, B);
       normalize(pathMainCurve);
       normalize(pathBackgroundCurves);
 
@@ -181,8 +182,8 @@ public class DinamicGraphics extends View {
    public void changeCursor(MotionEvent event) {
       if (horizontalCursor) {
          cursorX = event.getX();
-         if (cursorX < widthLeft) cursorX = widthLeft;
-         else if (cursorX > widthRight) cursorX = widthRight;
+         if (cursorX < cursorXmin) cursorX = cursorXmin;
+         else if (cursorX > cursorXmax) cursorX = cursorXmax;
          pathCursor.reset();
          pathCursor.moveTo(cursorX, heightTop);
          pathCursor.lineTo(cursorX, heightBottom);
@@ -327,7 +328,13 @@ public class DinamicGraphics extends View {
       this.ymax = ymax;
       this.ymin = ymin;
       this.xmax = xmax;
+      this.cxmax = xmax;
       this.xmin = xmin;
+      this.cxmin = xmin;
+   }
+   public void setCursorLimits(int xmin, int xmax) {
+      this.cxmax = xmax;
+      this.cxmin = xmin;
    }
    public void setMainCurveColor(int color) {
       paintCurve.setColor(color);
@@ -341,8 +348,13 @@ public class DinamicGraphics extends View {
    public void setBackgroundCurvesWidth(int width) {
       paintCurve.setStrokeWidth(width);
    }
-   public void setHorizontalCursor(boolean cursorMode) {
-      this.horizontalCursor = cursorMode;
+
+   public boolean changeCursorMode() {
+      this.horizontalCursor = !this.horizontalCursor;
+      return this.horizontalCursor;
+   }
+   public boolean getCursorMode() {
+      return this.horizontalCursor;
    }
 
    public float getCursorX() {
@@ -351,4 +363,5 @@ public class DinamicGraphics extends View {
    public float getCursorY() {
       return normalizeToScalar(cursorY, C, D);
    }
+
 }

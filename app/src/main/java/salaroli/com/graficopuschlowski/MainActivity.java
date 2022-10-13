@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
+    private boolean CursorModoHorizontal;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         DinamicGraphics dinamicGraphics = findViewById(R.id.dinamic_graphics);
         TextView betaText = findViewById(R.id.beta);
         TextView alphaText = findViewById(R.id.alpha);
-
+        CursorModoHorizontal = dinamicGraphics.getCursorMode();
         String[] Ytickers = new String[] { "90", "120", "150", "180", "210", "240", "270", "300", "330", "360"};
         String[] Xtickers = new String[] {"0", "20", "40", "60", "80", "100", "120", "140", "160", "180"};
 
@@ -45,14 +47,11 @@ public class MainActivity extends AppCompatActivity {
         dinamicGraphics.plotBackgroundCurves(valores_x, valores1);
         dinamicGraphics.plotBackgroundCurves(valores_x, valores3);
         dinamicGraphics.clearBackgroundCurves();
-
-        dinamicGraphics.post(new Runnable() {
-            @Override
-            public void run() {
-                dinamicGraphics.plotMainCurve(valores_x, valores1);
-                dinamicGraphics.plotBackgroundCurves(valores_x, valores2);
-                dinamicGraphics.plotBackgroundCurves(valores_x, valores3);
-            }
+        dinamicGraphics.setCursorLimits(40,140);
+        dinamicGraphics.post(() -> {
+            dinamicGraphics.plotMainCurve(valores_x, valores1);
+            dinamicGraphics.plotBackgroundCurves(valores_x, valores2);
+            dinamicGraphics.plotBackgroundCurves(valores_x, valores3);
         });
 
         dinamicGraphics.setOnTouchListener((view, motionEvent) -> {
@@ -62,10 +61,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        final boolean[] cursorMode = {false};
-        alphaText.setOnClickListener(view -> {
-            cursorMode[0] = !cursorMode[0];
-            dinamicGraphics.setHorizontalCursor(cursorMode[0]);
-        });
+        alphaText.setOnClickListener(view -> CursorModoHorizontal = dinamicGraphics.changeCursorMode());
     }
 }
