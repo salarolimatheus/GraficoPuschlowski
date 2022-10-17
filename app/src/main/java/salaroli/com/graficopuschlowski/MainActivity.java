@@ -5,12 +5,12 @@ import salaroli.com.dinamicgraphics.DinamicGraphics;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import java.text.DecimalFormat;
 
+public class MainActivity extends AppCompatActivity implements DinamicGraphics.InterfaceVerticalCursor{
     private boolean CursorModoHorizontal;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         dinamicGraphics.plotBackgroundCurves(valores_x, valores3);
         dinamicGraphics.clearBackgroundCurves();
         dinamicGraphics.setCursorLimits(40,140);
+        dinamicGraphics.setCircuitoListener(this);
         dinamicGraphics.post(() -> {
             dinamicGraphics.plotMainCurve(valores_x, valores1);
             dinamicGraphics.plotBackgroundCurves(valores_x, valores2);
@@ -57,10 +58,16 @@ public class MainActivity extends AppCompatActivity {
         dinamicGraphics.setOnTouchListener((view, motionEvent) -> {
             dinamicGraphics.changeCursor(motionEvent);
             alphaText.setText(String.valueOf(dinamicGraphics.getCursorX()));
-            betaText.setText(String.valueOf(dinamicGraphics.getCursorY()));
+            betaText.setText(String.valueOf(dinamicGraphics.getCursorActualY()));
+            dinamicGraphics.setCursorText(new DecimalFormat("0.00").format(dinamicGraphics.getCursorActualY()));
             return true;
         });
 
         alphaText.setOnClickListener(view -> CursorModoHorizontal = dinamicGraphics.changeCursorMode());
+    }
+
+    @Override
+    public void recalculateMainCurve(double x, double y) {
+        Toast.makeText(getApplicationContext(), "x: " + x + " y: " + y, Toast.LENGTH_SHORT).show();
     }
 }
