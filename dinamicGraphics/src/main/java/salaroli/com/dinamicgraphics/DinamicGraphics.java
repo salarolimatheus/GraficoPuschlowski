@@ -34,7 +34,7 @@ public class DinamicGraphics extends View {
 
     private InterfaceVerticalCursor interfaceVerticalCursor;
 
-    public void setCircuitoListener(InterfaceVerticalCursor interfaceVerticalCursor) {
+    public void setInterfaceListener(InterfaceVerticalCursor interfaceVerticalCursor) {
         this.interfaceVerticalCursor = interfaceVerticalCursor;
     }
 
@@ -75,13 +75,13 @@ public class DinamicGraphics extends View {
         paintGrade.setAntiAlias(true);
 
         paintCursor = new Paint();
-        paintCursor.setStrokeWidth(5);
+        paintCursor.setStrokeWidth(4);
         paintCursor.setStyle(Paint.Style.FILL_AND_STROKE);
         paintCursor.setColor(Color.RED);
         paintCursor.setAntiAlias(true);
 
         paintCurve = new Paint();
-        paintCurve.setStrokeWidth(5);
+        paintCurve.setStrokeWidth(6);
         paintCurve.setStyle(Paint.Style.STROKE);
         paintCurve.setColor(Color.BLUE);
         paintCurve.setAntiAlias(true);
@@ -132,7 +132,7 @@ public class DinamicGraphics extends View {
         if(!horizontalCursor) {
             paintCursor.setStrokeWidth(2);
             canvas.drawText(cursorText, cursorX + paintEixos.getStrokeWidth() * 10, cursorActualY + paintEixos.getStrokeWidth() * 2.25f, paintCursor);
-            paintCursor.setStrokeWidth(5);
+            paintCursor.setStrokeWidth(4);
         }
     }
 
@@ -368,7 +368,7 @@ public class DinamicGraphics extends View {
         this.xTitle = xTitle;
         this.yTitle = yTitle;
     }
-    public void setAxisLimits(int ymax, int ymin, int xmax, int xmin) {
+    public void setAxisLimits(float ymax, float ymin, float xmax, float xmin) {
         this.ymax = ymax;
         this.ymin = ymin;
         this.xmax = xmax;
@@ -376,7 +376,7 @@ public class DinamicGraphics extends View {
         this.xmin = xmin;
         this.cxmin = xmin;
     }
-    public void setCursorLimits(int xmin, int xmax) {
+    public void setCursorLimits(float xmin, float xmax) {
         this.cxmax = xmax;
         this.cxmin = xmin;
     }
