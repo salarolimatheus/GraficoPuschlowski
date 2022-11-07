@@ -33,6 +33,7 @@ public class DinamicGraphics extends View {
     private String cursorText;
 
     private InterfaceVerticalCursor interfaceVerticalCursor;
+    private boolean newCursorLimits = false;
 
     public void setInterfaceListener(InterfaceVerticalCursor interfaceVerticalCursor) {
         this.interfaceVerticalCursor = interfaceVerticalCursor;
@@ -141,7 +142,7 @@ public class DinamicGraphics extends View {
             unnormalize(pathMainCurve);
             unnormalize(pathBackgroundCurves);
         }
-        // TODO: E SE oldw e oldh forem diferente de 0 ??????
+
         alturaTotal = height;
         larguraTotal = width;
 
@@ -214,6 +215,10 @@ public class DinamicGraphics extends View {
 
     public void changeCursor(MotionEvent event) {
         if (horizontalCursor) {
+            if (newCursorLimits) {
+                cursorXmax = normalizeToPlot(cxmax, A, B);
+                cursorXmin = normalizeToPlot(cxmin, A, B);
+            }
             cursorX = event.getX();
             if (cursorX < cursorXmin) cursorX = cursorXmin;
             else if (cursorX > cursorXmax) cursorX = cursorXmax;
@@ -379,6 +384,7 @@ public class DinamicGraphics extends View {
     public void setCursorLimits(float xmin, float xmax) {
         this.cxmax = xmax;
         this.cxmin = xmin;
+        newCursorLimits = true;
     }
     public void setMainCurveColor(int color) {
         paintCurve.setColor(color);

@@ -12,13 +12,14 @@ import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity implements DinamicGraphics.InterfaceVerticalCursor{
     private boolean CursorModoHorizontal;
+    private DinamicGraphics dinamicGraphics;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        DinamicGraphics dinamicGraphics = findViewById(R.id.dinamic_graphics);
+        dinamicGraphics = findViewById(R.id.dinamic_graphics);
         TextView betaText = findViewById(R.id.beta);
         TextView alphaText = findViewById(R.id.alpha);
         CursorModoHorizontal = dinamicGraphics.getCursorMode();
@@ -40,10 +41,6 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
 //            valores3[i] = 360 - 0.001f * i*i;
 //        }
 //
-//        dinamicGraphics.setGradeStatus(true);
-//        dinamicGraphics.setXNameTickers(Xtickers);
-//        dinamicGraphics.setYNameTickers(Ytickers);
-//        dinamicGraphics.setAxisTitles("α(°)", "β(°)");
 //        dinamicGraphics.plotMainCurve(valores_x, valores);
 //        dinamicGraphics.plotBackgroundCurves(valores_x, valores1);
 //        dinamicGraphics.plotBackgroundCurves(valores_x, valores3);
@@ -66,8 +63,11 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
             beta[i] = 90+i;
         }
         dinamicGraphics.plotMainCurve(alpha, beta);
-        dinamicGraphics.setCursorLimits((int) alpha[0], (int) alpha[0]);
 
+        dinamicGraphics.setGradeStatus(true);
+        dinamicGraphics.setXNameTickers(Xtickers);
+        dinamicGraphics.setYNameTickers(Ytickers);
+        dinamicGraphics.setAxisTitles("α(°)", "β(°)");
         dinamicGraphics.setOnTouchListener((view, motionEvent) -> {
             dinamicGraphics.changeCursor(motionEvent);
             alphaText.setText(String.valueOf(dinamicGraphics.getCursorX()));
@@ -77,6 +77,12 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
         });
 
         alphaText.setOnClickListener(view -> CursorModoHorizontal = dinamicGraphics.changeCursorMode());
+    }
+
+    @Override
+    protected void onResume() {
+        dinamicGraphics.setCursorLimits(20, 20);
+        super.onResume();
     }
 
     @Override
