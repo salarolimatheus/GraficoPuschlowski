@@ -34,6 +34,7 @@ public class DinamicGraphics extends View {
 
     private InterfaceVerticalCursor interfaceVerticalCursor;
     private boolean newCursorLimits = false;
+    private boolean cursorTextdraw = true;
 
     public void setInterfaceListener(InterfaceVerticalCursor interfaceVerticalCursor) {
         this.interfaceVerticalCursor = interfaceVerticalCursor;
@@ -130,10 +131,12 @@ public class DinamicGraphics extends View {
         canvas.drawPath(pathMainCurve, paintCurve);
         canvas.drawPath(pathBackgroundCurves, paintBackgroundCurves);
         canvas.drawPath(pathCursor, paintCursor);
-        if(!horizontalCursor) {
+        if(!horizontalCursor && cursorTextdraw) {
             paintCursor.setStrokeWidth(2);
             canvas.drawText(cursorText, cursorX + paintEixos.getStrokeWidth() * 10, cursorActualY + paintEixos.getStrokeWidth() * 2.25f, paintCursor);
             paintCursor.setStrokeWidth(4);
+        } else if (!cursorTextdraw) {
+            cursorTextdraw = true;
         }
     }
 
@@ -387,6 +390,25 @@ public class DinamicGraphics extends View {
         this.cxmax = xmax;
         this.cxmin = xmin;
         newCursorLimits = true;
+    }
+
+    public void setCursorAt(float xCursor) {
+        cursorX = normalizeToPlot(xCursor, A, B);
+        if (xCursor == 0)
+                return;
+
+        if (cursorX < cursorXmin) cursorX = cursorXmin;
+        else if (cursorX > cursorXmax) cursorX = cursorXmax;
+        pathCursor.reset();
+        pathCursor.moveTo(cursorX, heightTop);
+        pathCursor.lineTo(cursorX, heightBottom);
+
+        float cursorAlpha = normalizeToScalar(cursorX, A, B);
+        float cursorBeta = (float) beta[findIndexOfNearestValue(alpha, cursorAlpha)];
+        cursorY = normalizeToPlot(cursorBeta, C, D);
+        pathCursor.addCircle(cursorX, cursorY,paintEixos.getStrokeWidth() * 1.5f, Path.Direction.CW);
+        cursorTextdraw = false;
+        invalidate();
     }
     public void setMainCurveColor(int color) {
         paintCurve.setColor(color);
