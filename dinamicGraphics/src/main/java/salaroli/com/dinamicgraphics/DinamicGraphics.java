@@ -40,7 +40,7 @@ public class DinamicGraphics extends View {
     }
 
     public interface InterfaceVerticalCursor {
-        void recalculateMainCurve(double x, double y);
+        void recalculateMainCurve();
     }
 
     public DinamicGraphics(Context context) {
@@ -233,7 +233,9 @@ public class DinamicGraphics extends View {
         } else {
             int action = event.getAction();
             if ((action == MotionEvent.ACTION_UP) ||  (action == MotionEvent.ACTION_CANCEL)) {
-                interfaceVerticalCursor.recalculateMainCurve(getCursorX(), getCursorActualY());
+                if (interfaceVerticalCursor != null)
+                    interfaceVerticalCursor.recalculateMainCurve();
+
                 return;
             }
             cursorActualY = event.getY();
@@ -422,5 +424,9 @@ public class DinamicGraphics extends View {
         else
             return normalizeToScalar(cursorActualY, C, D);
 
+    }
+
+    public float getCursorActualYNormalized() {
+        return (cursorActualY - heightBottom) * 1 / (heightTop - heightBottom);
     }
 }

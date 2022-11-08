@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
         }
         dinamicGraphics.plotMainCurve(alpha, beta);
 
+            dinamicGraphics.setInterfaceListener(this);
         dinamicGraphics.setGradeStatus(true);
         dinamicGraphics.setXNameTickers(Xtickers);
         dinamicGraphics.setYNameTickers(Ytickers);
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
             dinamicGraphics.changeCursor(motionEvent);
             alphaText.setText(String.valueOf(dinamicGraphics.getCursorX()));
             betaText.setText(String.valueOf(dinamicGraphics.getCursorActualY()));
-            dinamicGraphics.setCursorText(new DecimalFormat("0.00").format(dinamicGraphics.getCursorActualY()));
+            dinamicGraphics.setCursorText(new DecimalFormat("0.00").format(dinamicGraphics.getCursorActualYNormalized()));
             return true;
         });
 
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
     }
 
     @Override
-    public void recalculateMainCurve(double x, double y) {
-        Toast.makeText(getApplicationContext(), "x: " + x + " y: " + y, Toast.LENGTH_SHORT).show();
+    public void recalculateMainCurve() {
+        Toast.makeText(getApplicationContext(), "RECALCULADO", Toast.LENGTH_SHORT).show();
     }
 }
