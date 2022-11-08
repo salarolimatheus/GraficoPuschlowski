@@ -397,6 +397,11 @@ public class DinamicGraphics extends View {
         if (xCursor == 0)
                 return;
 
+        if (newCursorLimits) {
+            cursorXmax = normalizeToPlot(cxmax, A, B);
+            cursorXmin = normalizeToPlot(cxmin, A, B);
+        }
+
         if (cursorX < cursorXmin) cursorX = cursorXmin;
         else if (cursorX > cursorXmax) cursorX = cursorXmax;
         pathCursor.reset();

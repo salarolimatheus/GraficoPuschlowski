@@ -82,13 +82,13 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
 
     @Override
     protected void onResume() {
-        dinamicGraphics.setCursorLimits(20, 140);
         super.onResume();
     }
 
     @Override
     public void recalculateMainCurve() {
         Toast.makeText(getApplicationContext(), "RECALCULADO", Toast.LENGTH_SHORT).show();
-        dinamicGraphics.setCursorAt(90);
+        dinamicGraphics.setCursorLimits(20, 20);
+        dinamicGraphics.setCursorAt(20);
     }
 }
