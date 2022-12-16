@@ -42,6 +42,7 @@ public class DinamicGraphics extends View {
 
     public interface InterfaceVerticalCursor {
         void recalculateMainCurve();
+        void onSizeChangedDone();
     }
 
     public DinamicGraphics(Context context) {
@@ -171,11 +172,24 @@ public class DinamicGraphics extends View {
         paintCursor.setTextSize(paintEixos.getStrokeWidth() * 8f);
         cursorXmax = normalizeToPlot(cxmax, A, B);
         cursorXmin = normalizeToPlot(cxmin, A, B);
-        cursorX = cursorXmin;
+        if ((alpha != null) && (beta != null)) {
+            cursorX = normalizeToPlot((float) alpha[0], A, B);
+            pathCursor.reset();
+            pathCursor.moveTo(cursorX, heightTop);
+            pathCursor.lineTo(cursorX, heightBottom);
+            cursorY = normalizeToPlot((float) beta[0], C, D);
+            cursorActualY = cursorY;
+            pathCursor.addCircle(cursorX, cursorY,paintEixos.getStrokeWidth() * 1.5f, Path.Direction.CW);
+        } else {
+            cursorX = cursorXmin;
+        }
+
         normalize(pathMainCurve);
         normalize(pathBackgroundCurves);
 
         rect = new Rect(0, 0, width, height);
+        if (interfaceVerticalCursor != null)
+            interfaceVerticalCursor.onSizeChangedDone();
         super.onSizeChanged(width, height, oldw, oldh);
     }
     private void calculateBoundaries() {
@@ -230,8 +244,12 @@ public class DinamicGraphics extends View {
             pathCursor.lineTo(cursorX, heightBottom);
 
             float cursorAlpha = normalizeToScalar(cursorX, A, B);
-            float cursorBeta = (float) beta[findIndexOfNearestValue(alpha, cursorAlpha)];
-            cursorY = normalizeToPlot(cursorBeta, C, D);
+            if ((alpha != null) && (beta != null)) {
+                float cursorBeta = (float) beta[findIndexOfNearestValue(alpha, cursorAlpha)];
+                cursorY = normalizeToPlot(cursorBeta, C, D);
+            } else {
+                cursorY = heightBottom;
+            }
             pathCursor.addCircle(cursorX, cursorY,paintEixos.getStrokeWidth() * 1.5f, Path.Direction.CW);
         } else {
             int action = event.getAction();
@@ -255,7 +273,7 @@ public class DinamicGraphics extends View {
     private int findIndexOfNearestValue(double[] array, float value) {
         int index = 0;
         float difference = (float) abs(value - array[0]);
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 1; i < array.length; i++) {
             if (abs(value - array[i]) < difference) {
                 difference = (float) abs(value - array[i]);
                 index = i;
@@ -339,6 +357,7 @@ public class DinamicGraphics extends View {
         for (int i = 1; i < alpha.length; i++) {
             pathMainCurve.lineTo((float) alpha[i], (float) beta[i]);
         }
+
         checkNormalize(pathMainCurve);
         return true;
     }
@@ -394,8 +413,6 @@ public class DinamicGraphics extends View {
 
     public void setCursorAt(float xCursor) {
         cursorX = normalizeToPlot(xCursor, A, B);
-        if (xCursor == 0)
-                return;
 
         if (newCursorLimits) {
             cursorXmax = normalizeToPlot(cxmax, A, B);
@@ -409,8 +426,12 @@ public class DinamicGraphics extends View {
         pathCursor.lineTo(cursorX, heightBottom);
 
         float cursorAlpha = normalizeToScalar(cursorX, A, B);
-        float cursorBeta = (float) beta[findIndexOfNearestValue(alpha, cursorAlpha)];
-        cursorY = normalizeToPlot(cursorBeta, C, D);
+        if ((alpha != null) && (beta != null)) {
+            float cursorBeta = (float) beta[findIndexOfNearestValue(alpha, cursorAlpha)];
+            cursorY = normalizeToPlot(cursorBeta, C, D);
+        } else {
+            cursorY = heightBottom;
+        }
         pathCursor.addCircle(cursorX, cursorY,paintEixos.getStrokeWidth() * 1.5f, Path.Direction.CW);
         cursorTextdraw = false;
         invalidate();
