@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import salaroli.com.dinamicgraphics.DinamicGraphics;
 
 import android.annotation.SuppressLint;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -30,23 +32,23 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
         String[] Ytickers = new String[] { "90", "120", "150", "180", "210", "240", "270", "300", "330", "360"};
         String[] Xtickers = new String[] {"0", "20", "40", "60", "80", "100", "120", "140", "160", "180"};
 
-        double alpha = 90;
-        double beta = 210;
-//        double[] alpha = new double[180];
-//        double[] beta = new double[180];
-//        for (int i = 0; i < beta.length; i++) {
-//            double phi = i * (Math.PI/360);
-//            alpha[i] = 20;
-//            beta[i] = 90+i;
-//        }
-//        dinamicGraphics.plotMainCurve(new double[]{alpha}, new double[]{beta});
-        dinamicGraphics.setCursorLimits((float) alpha, (float) alpha);
-        dinamicGraphics.setCursorAt(200);
+        double[] alpha = new double[180];
+        double[] beta = new double[180];
+        for (int i = 0; i < beta.length; i++) {
+            double phi = i * (Math.PI/360);
+            alpha[i] = i;
+            beta[i] = 90+i;
+        }
+        dinamicGraphics.plotMainCurve(alpha, beta);
+        dinamicGraphics.setCursorLimits((float) alpha[30], (float) alpha[30]);
+//        dinamicGraphics.setCursorAt(5);
         dinamicGraphics.setInterfaceListener(this);
         dinamicGraphics.setGradeStatus(true);
         dinamicGraphics.setXNameTickers(Xtickers);
         dinamicGraphics.setYNameTickers(Ytickers);
         dinamicGraphics.setAxisTitles("α(°)", "β(°)");
+        dinamicGraphics.setCursorStyle(new DashPathEffect(new float[]{15, 30}, 0));
+        dinamicGraphics.setCursorColor(Color.MAGENTA);
 
         dinamicGraphics.clearBackgroundCurves();
 
@@ -79,11 +81,5 @@ public class MainActivity extends AppCompatActivity implements DinamicGraphics.I
         Toast.makeText(getApplicationContext(), "RECALCULADO", Toast.LENGTH_SHORT).show();
         dinamicGraphics.setCursorLimits(20, 20);
         dinamicGraphics.setCursorAt(20);
-    }
-
-    @Override
-    public void onSizeChangedDone() {
-        alphaText.setText(String.valueOf(dinamicGraphics.getCursorX()));
-        betaText.setText(String.valueOf(dinamicGraphics.getCursorActualY()));
     }
 }

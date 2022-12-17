@@ -7,6 +7,7 @@ import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathEffect;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -18,7 +19,7 @@ import static java.lang.Math.abs;
 
 public class DinamicGraphics extends View {
     private Paint paintEixos, paintGrade, paintTitles, paintNameTickers, paintCursor, paintCurve, paintBackgroundCurves;
-    private Path pathEixos, pathGradeX, pathGradeY, pathTickerX, pathTickerY, pathCursor, pathMainCurve, pathBackgroundCurves;
+    private Path pathEixos, pathGradeX, pathGradeY, pathTickerX, pathTickerY, pathCursor, pathCursorLine, pathMainCurve, pathBackgroundCurves;
     private Rect rect;
     private int larguraTotal, alturaTotal;
     private float widthLeft, widthRight, heightTop, heightBottom, paddingTicker;
@@ -42,7 +43,6 @@ public class DinamicGraphics extends View {
 
     public interface InterfaceVerticalCursor {
         void recalculateMainCurve();
-        void onSizeChangedDone();
     }
 
     public DinamicGraphics(Context context) {
@@ -80,6 +80,7 @@ public class DinamicGraphics extends View {
         paintCursor = new Paint();
         paintCursor.setStrokeWidth(4);
         paintCursor.setStyle(Paint.Style.FILL_AND_STROKE);
+        paintCursor.setPathEffect(new DashPathEffect(new float[]{15, 30}, 0));
         paintCursor.setColor(Color.RED);
         paintCursor.setAntiAlias(true);
 
@@ -109,6 +110,7 @@ public class DinamicGraphics extends View {
         pathMainCurve = new Path();
         pathBackgroundCurves = new Path();
         pathCursor = new Path();
+        pathCursorLine = new Path();
     }
 
     @Override
@@ -131,6 +133,9 @@ public class DinamicGraphics extends View {
 
         canvas.drawPath(pathMainCurve, paintCurve);
         canvas.drawPath(pathBackgroundCurves, paintBackgroundCurves);
+        paintCursor.setStyle(Paint.Style.STROKE);
+        canvas.drawPath(pathCursorLine, paintCursor);
+        paintCursor.setStyle(Paint.Style.FILL_AND_STROKE);
         canvas.drawPath(pathCursor, paintCursor);
         if(!horizontalCursor && cursorTextdraw) {
             paintCursor.setStrokeWidth(2);
@@ -175,21 +180,22 @@ public class DinamicGraphics extends View {
         if ((alpha != null) && (beta != null)) {
             cursorX = normalizeToPlot((float) alpha[0], A, B);
             pathCursor.reset();
-            pathCursor.moveTo(cursorX, heightTop);
-            pathCursor.lineTo(cursorX, heightBottom);
+            pathCursorLine.reset();
+            pathCursorLine.moveTo(cursorX, heightTop);
+            pathCursorLine.lineTo(cursorX, heightBottom);
             cursorY = normalizeToPlot((float) beta[0], C, D);
             cursorActualY = cursorY;
             pathCursor.addCircle(cursorX, cursorY,paintEixos.getStrokeWidth() * 1.5f, Path.Direction.CW);
         } else {
             cursorX = cursorXmin;
+            cursorY = heightBottom;
+            cursorActualY = heightBottom;
         }
 
         normalize(pathMainCurve);
         normalize(pathBackgroundCurves);
 
         rect = new Rect(0, 0, width, height);
-        if (interfaceVerticalCursor != null)
-            interfaceVerticalCursor.onSizeChangedDone();
         super.onSizeChanged(width, height, oldw, oldh);
     }
     private void calculateBoundaries() {
@@ -240,8 +246,9 @@ public class DinamicGraphics extends View {
             if (cursorX < cursorXmin) cursorX = cursorXmin;
             else if (cursorX > cursorXmax) cursorX = cursorXmax;
             pathCursor.reset();
-            pathCursor.moveTo(cursorX, heightTop);
-            pathCursor.lineTo(cursorX, heightBottom);
+            pathCursorLine.reset();
+            pathCursorLine.moveTo(cursorX, heightTop);
+            pathCursorLine.lineTo(cursorX, heightBottom);
 
             float cursorAlpha = normalizeToScalar(cursorX, A, B);
             if ((alpha != null) && (beta != null)) {
@@ -263,8 +270,9 @@ public class DinamicGraphics extends View {
             if (cursorActualY < heightTop) cursorActualY = heightTop;
             else if (cursorActualY > heightBottom) cursorActualY = heightBottom;
             pathCursor.reset();
-            pathCursor.moveTo(cursorX, heightTop);
-            pathCursor.lineTo(cursorX, heightBottom);
+            pathCursorLine.reset();
+            pathCursorLine.moveTo(cursorX, heightTop);
+            pathCursorLine.lineTo(cursorX, heightBottom);
             pathCursor.addCircle(cursorX, cursorActualY,paintEixos.getStrokeWidth() * 4.5f, Path.Direction.CW);
         }
         invalidate();
@@ -422,8 +430,9 @@ public class DinamicGraphics extends View {
         if (cursorX < cursorXmin) cursorX = cursorXmin;
         else if (cursorX > cursorXmax) cursorX = cursorXmax;
         pathCursor.reset();
-        pathCursor.moveTo(cursorX, heightTop);
-        pathCursor.lineTo(cursorX, heightBottom);
+        pathCursorLine.reset();
+        pathCursorLine.moveTo(cursorX, heightTop);
+        pathCursorLine.lineTo(cursorX, heightBottom);
 
         float cursorAlpha = normalizeToScalar(cursorX, A, B);
         if ((alpha != null) && (beta != null)) {
@@ -451,6 +460,13 @@ public class DinamicGraphics extends View {
     public void setCursorText(String cursorText) {
         this.cursorText = cursorText;
     }
+    public void setCursorColor(int color) {
+        paintCursor.setColor(color);
+    }
+    public void setCursorStyle(PathEffect pathEffect) {
+        paintCursor.setPathEffect(pathEffect);
+    }
+
     public boolean changeCursorMode() {
         this.horizontalCursor = !this.horizontalCursor;
         return this.horizontalCursor;
